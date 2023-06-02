@@ -5,10 +5,6 @@ const cors = require('cors');
 require('dotenv').config()
 const jwt = require('jsonwebtoken');
 
-// bistrobossrestaurant
-// EDSAKAdPB1Qyq0Hi
-
-console.log(process.env.USER_ACCESS_TOKEN);
 app.use(cors())
 app.use(express.json())
 app.get('/', (req, res) => {
@@ -61,10 +57,10 @@ async function run() {
             const token = jwt.sign(user, process.env.USER_ACCESS_TOKEN, { expiresIn: '1h' })
             res.send({ token })
         })
-        const verifyAdmin= async (req,res,next)=>{
-            const email=req.decoded.email 
-            const query={email:email}
-            const user= await userCollection.findOne(query)
+        const verifyAdmin = async (req, res, next) => {
+            const email = req.decoded.email
+            const query = { email: email }
+            const user = await userCollection.findOne(query)
             if (user?.role !== "admin" && user?.role !== undefined && user?.role !== null) {
                 return res.status(403).send({ error: true, message: "Forbidden" });
             }
@@ -75,6 +71,29 @@ async function run() {
             const result = await foodCollection.find().toArray()
             res.send(result)
         })
+        app.post("/addallFoodMenu", verifyJwt, verifyAdmin, async (req, res) => {
+            const doc = req.body
+            const result = await foodCollection.insertOne(doc)
+            res.send(result)
+        })
+
+        app.delete("/removeFood/:id", async(req,res)=>{
+            const id=req.params.id
+            console.log(id);
+            const query={_id: new ObjectId(id)}
+            const result = await foodCollection.deleteOne(query)
+            res.send(result)
+        })
+        app.get("/get/:id", async(req,res)=>{
+            const id=req.params.id
+            console.log(id);
+            const query={_id: new ObjectId(id)}
+            const result = await foodCollection.findOne(query)
+            res.send(result)
+        })
+
+
+        // reviewCollection
         app.get("/review", async (req, res) => {
             const result = await reviewCollection.find().toArray()
             res.send(result)
@@ -87,7 +106,7 @@ async function run() {
             const result = await cartCollection.insertOne(addedProduct)
             res.send(result)
         })
-        app.get("/carts", verifyJwt,  async (req, res) => {
+        app.get("/carts", verifyJwt, async (req, res) => {
             const email = req.query.email;
 
             if (!email) {
@@ -124,7 +143,7 @@ async function run() {
 
             }
         })
-        app.get("/users", verifyJwt,verifyAdmin, async (req, res) => {
+        app.get("/users", verifyJwt, verifyAdmin, async (req, res) => {
             const result = await userCollection.find().toArray()
             res.send(result)
         })
